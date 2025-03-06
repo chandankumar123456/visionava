@@ -14,3 +14,4 @@ opencv-python
 numpy
 librosa
 pyttsx3
+pymongo

@@ -8,10 +8,42 @@ from langchain.schema import SystemMessage, HumanMessage, AIMessage
 from dotenv import load_dotenv
 import os
 
+from langchain.memory import ConversationBufferMemory
+
+# from models.database import store_chat_in_db, get_chat_history_from_db
+
+from pymongo import MongoClient
+from datetime import datetime
+
+MONGO_URI = 'mongodb+srv://aj309430:Abhi.3094@cluster0.l8ana.mongodb.net/'
+client = MongoClient(MONGO_URI)
+db = client["visionava_users"]
+chat_collection = db["users_chat"]
+
+def store_chat_in_db(user_id, user_text, ai_response):
+    """Stores user and AI messages in the database"""
+    chat_entry = {
+        "user_id": user_id,
+        "timestamp": datetime.utcnow(),
+        "user_message": user_text,
+        "ai_response": ai_response
+    }
+    chat_collection.insert_one(chat_entry)
+
+def get_chat_history_from_db(user_id):
+    """Retrieves all chat history for a user"""
+    chat_history = chat_collection.find({"user_id": user_id}).sort("timestamp", 1)
+    return [{"user": entry["user_message"], "ai": entry["ai_response"]} for entry in chat_history]
+
+# the above code is for atlas 
+
 openai_api_key = os.getenv("OPENAI_API_KEY")
 # print(openai_api_key) 
 # llm = OpenAI(model="gpt-3.5-turbo")
 llm = ChatOpenAI(model='gpt-3.5-turbo')
+
+# Create memory for storing chat history
+memory = ConversationBufferMemory()
 
 def determine_dominant_emotion(text_sentiment, voice_emotion, face_emotion):
     """
@@ -32,8 +64,18 @@ def determine_dominant_emotion(text_sentiment, voice_emotion, face_emotion):
 
     return voice_emotion or text_sentiment or face_emotion
 
-def generate_chatbot_response(user_text, face_emotion, voice_emotion):
+def generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion):
     """Generates chatbot response based on text sentiment, face emotion and voice tone."""
+
+    # Retrieve previous conversation history from MongoDB Atlas
+    chat_history = get_chat_history_from_db(user_id)
+
+    # Convert chat history into LangChain-compatible format
+    formatted_history = []
+    for entry in chat_history:
+        formatted_history.append(HumanMessage(content=entry["user"]))
+        formatted_history.append(SystemMessage(content=entry["ai"]))
+
     sentiment, confidence = analyze_sentiment(user_text)
     dominant_emotion = determine_dominant_emotion(sentiment, voice_emotion, face_emotion)
 
@@ -47,23 +89,33 @@ def generate_chatbot_response(user_text, face_emotion, voice_emotion):
 
 
     system_message = SystemMessage(
-        content=(
-            "You are a compassionate mental health therapy assistant. "
-            "Your responses should be empathetic, patient, and supportive. "
-            "Ask open-ended questions, provide validation, and avoid giving direct medical advice. "
-            "If emotions appear mixed (e.g., happy face but sad voice), acknowledge that they might be hiding emotions."
-        )
+    content=(
+        "You are a compassionate mental health therapist. "
+        "Before giving advice, always validate the user's feelings. "
+        "If emotions conflict, acknowledge the contradiction and encourage self-reflection. "
+        "Ask open-ended questions before suggesting solutions. "
+        "Avoid generic responses—tailor your reply to the user's situation."
+    )
+)
+
+    user_message = HumanMessage(
+        content=f"The user feels {dominant_emotion}. They said: {user_text}. "
+                "Please generate a thoughtful, empathetic response."
     )
 
-    user_message = HumanMessage(content=f"{mixed_emotion_prompt}\nUser's input: {user_text}")
     
-    messages = [
+    messages = formatted_history + [
         system_message,
         user_message
     ]
 
     ai_response = llm.invoke(messages)
 
+    # # Store user input and AI response in memory (Modified here)
+    # memory.save_context({"input": user_text}, {"output": ai_response.content})
+
+    # Store the chat history in MongoDB Atlas under users_chat collection
+    store_chat_in_db(user_id, user_text, ai_response.content)
     return ai_response.content
 
 

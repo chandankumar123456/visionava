@@ -52,7 +52,7 @@ def unified_emotion():
     """
     Analyzes both face emotion, text sentiment and voice tone
     """
-
+    user_id = request.form.get("user_id", None)
     user_text = request.form.get("text", "")
     face_file = request.files.get("face")
     voice_file = request.files.get("voice")
@@ -70,7 +70,10 @@ def unified_emotion():
         voice_file.save(voice_path)
         voice_emotion = analyze_voice_emotion(voice_path)
 
-    chatbot_response = generate_chatbot_response(user_text, face_emotion, voice_emotion)
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+
+    chatbot_response = generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion)
 
     return jsonify({
         "text_sentiment": analyze_sentiment(user_text)[0],
