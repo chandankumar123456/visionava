@@ -20,20 +20,40 @@ client = MongoClient(MONGO_URI)
 db = client["visionava_users"]
 chat_collection = db["users_chat"]
 
-def store_chat_in_db(user_id, user_text, ai_response):
+def store_chat_in_db(user_id, user_text, ai_response, voice_emotion):
     """Stores user and AI messages in the database"""
     chat_entry = {
-        "user_id": user_id,
         "timestamp": datetime.utcnow(),
         "user_message": user_text,
-        "ai_response": ai_response
+        "ai_response": ai_response,
+        "voice_emotion": voice_emotion
     }
-    chat_collection.insert_one(chat_entry)
+
+    # Check if user already has a chat history document
+    existing_chat = chat_collection.find_one({"user_id": user_id})
+
+    if existing_chat:
+        # Append new message to the existing chat history
+        chat_collection.update_one(
+            {"user_id": user_id},
+            {"$push": {"chat_history": chat_entry}}
+        )
+    else:
+        # Create a new document for the user
+        chat_collection.insert_one({
+            "user_id": user_id,
+            "chat_history": [chat_entry]
+        })
 
 def get_chat_history_from_db(user_id):
     """Retrieves all chat history for a user"""
-    chat_history = chat_collection.find({"user_id": user_id}).sort("timestamp", 1)
-    return [{"user": entry["user_message"], "ai": entry["ai_response"]} for entry in chat_history]
+    existing_chat = chat_collection.find_one({"user_id": user_id})
+    if existing_chat:
+        return existing_chat.get("chat_history", [])
+    
+    return []
+    # chat_history = chat_collection.find({"user_id": user_id}).sort("timestamp", 1)
+    # return [{"user": entry["user_message"], "ai": entry["ai_response"]} for entry in chat_history]
 
 # the above code is for atlas 
 
@@ -64,7 +84,7 @@ def determine_dominant_emotion(text_sentiment, voice_emotion, face_emotion):
 
     return voice_emotion or text_sentiment or face_emotion
 
-def generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion):
+def generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion, voice_text):
     """Generates chatbot response based on text sentiment, face emotion and voice tone."""
 
     # Retrieve previous conversation history from MongoDB Atlas
@@ -73,8 +93,8 @@ def generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion):
     # Convert chat history into LangChain-compatible format
     formatted_history = []
     for entry in chat_history:
-        formatted_history.append(HumanMessage(content=entry["user"]))
-        formatted_history.append(SystemMessage(content=entry["ai"]))
+        formatted_history.append(HumanMessage(content=entry["user_message"]))
+        formatted_history.append(SystemMessage(content=entry["ai_response"]))
 
     sentiment, confidence = analyze_sentiment(user_text)
     dominant_emotion = determine_dominant_emotion(sentiment, voice_emotion, face_emotion)
@@ -115,7 +135,7 @@ def generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion):
     # memory.save_context({"input": user_text}, {"output": ai_response.content})
 
     # Store the chat history in MongoDB Atlas under users_chat collection
-    store_chat_in_db(user_id, user_text, ai_response.content)
+    store_chat_in_db(user_id, user_text, ai_response.content, voice_emotion)
     return ai_response.content
 
 

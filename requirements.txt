@@ -15,3 +15,6 @@ numpy
 librosa
 pyttsx3
 pymongo
+SpeechRecognition
+pydub
+openai-whisper

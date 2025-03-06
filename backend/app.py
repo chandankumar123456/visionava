@@ -8,6 +8,7 @@ from chatbot_response import generate_chatbot_response
 import os
 
 from voice_emotion import analyze_voice_emotion
+from utils import transcribe_voice
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -57,6 +58,8 @@ def unified_emotion():
     face_file = request.files.get("face")
     voice_file = request.files.get("voice")
 
+    voice_text=None
+
     face_emotion = None
     voice_emotion = None
 
@@ -69,16 +72,22 @@ def unified_emotion():
         voice_path = os.path.join(app.config["UPLOAD_FOLDER"], voice_file.filename)
         voice_file.save(voice_path)
         voice_emotion = analyze_voice_emotion(voice_path)
+        voice_text = transcribe_voice(voice_path)
+
+    if not user_text and voice_text:
+        user_text = voice_text
 
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
-    chatbot_response = generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion)
+    chatbot_response = generate_chatbot_response(user_id, user_text, face_emotion, voice_emotion, voice_text)
 
     return jsonify({
+        "user_text": user_text,  # ✅ Final text used (either typed or transcribed)
         "text_sentiment": analyze_sentiment(user_text)[0],
         "face_emotion": face_emotion,
         "voice_emotion": voice_emotion,
+        "voice_text": voice_text,  # ✅ Include transcribed voice text for debugging
         "chatbot_response": chatbot_response
     })
 

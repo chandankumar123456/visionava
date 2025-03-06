@@ -1,5 +1,4 @@
 .env
-client
 frontend
 uploads
 test.py
@@ -7,3 +6,6 @@ angry_sample.wav
 happy_sample.wav
 sad_sample.wav
 models
+my-emotion-app
+ai-therapy-bot
+client/node_modules
