@@ -1,0 +1,14 @@
+langchain
+langchain_community
+langchain-text-splitters
+langchain-openai
+python-dotenv
+flask
+flask-cors
+transformers
+torch
+tensorflow
+tf-keras
+deepface
+opencv-python
+numpy
