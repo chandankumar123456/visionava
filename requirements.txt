@@ -12,3 +12,5 @@ tf-keras
 deepface
 opencv-python
 numpy
+librosa
+pyttsx3
