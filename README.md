@@ -19,46 +19,49 @@ The AI-Powered Mental Health Therapy Bot is designed to provide empathetic, pers
 - **Database:** MongoDB
 
 ## Installation & Setup
-
 ### API
-1. Navigate to the `api` directory:
-   ```sh
+1. Navigate to the API directory:
+   ```bash
    cd api
    ```
 2. Install dependencies:
-   ```sh
+   ```bash
    pip install -r requirements.txt
    ```
-3. Run the API server:
-   ```sh
+3. Create a `.env` file in the `api` directory and add your OpenAI API key:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+4. Run the API server:
+   ```bash
    python app.py
    ```
 
 ### Backend
-1. Navigate to the `backend` directory:
-   ```sh
+1. Navigate to the backend directory:
+   ```bash
    cd backend
    ```
 2. Install dependencies:
-   ```sh
+   ```bash
    npm install
    ```
 3. Run the backend server:
-   ```sh
+   ```bash
    nodemon index.js
    ```
 
 ### Frontend
-1. Navigate to the `frontend` directory:
-   ```sh
+1. Navigate to the frontend directory:
+   ```bash
    cd frontend
    ```
 2. Install dependencies:
-   ```sh
+   ```bash
    npm install
    ```
 3. Start the frontend development server:
-   ```sh
+   ```bash
    npm run dev
    ```
 
@@ -70,15 +73,14 @@ The AI-Powered Mental Health Therapy Bot is designed to provide empathetic, pers
 5. Interact with the chatbot using text, voice, or facial expressions.
 
 ## Future Improvements
-- **Text-to-Speech (TTS) integration to enhance accessibility.**
-- **Real-time voice tone analysis for better emotional understanding.**
-- **Integration with therapy professionals for enhanced assistance.**
-- **Mobile app support for wider accessibility.**
-- **Integration with wearable devices for physiological data tracking.**
-- **Enhanced recommendation system with personalized activity suggestions.**
-- **Daily mood tracking feature with progress visualization.**
-- **Secure user authentication for personalized therapy sessions.**
+- **Text-to-Speech (TTS)** integration to enhance accessibility.
+- **Real-time voice tone analysis** for better emotional understanding.
+- **Integration with therapy professionals** for enhanced assistance.
+- **Mobile app support** for wider accessibility.
+- **Integration with wearable devices** for physiological data tracking.
+- **Enhanced recommendation system** with personalized activity suggestions.
+- **Daily mood tracking feature** with progress visualization.
+- **Secure user authentication** for personalized therapy sessions.
 
 ## Contributing
 Feel free to contribute by submitting pull requests or reporting issues. Your contributions are highly valued!
-
