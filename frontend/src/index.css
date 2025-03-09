@@ -1,0 +1,14 @@
+li{
+    list-style-type: none;
+}
+
+button{
+    border: none;
+    outline: none;
+}
+
+Link,a{
+    text-decoration: none;
+    color: white;
+}
+
